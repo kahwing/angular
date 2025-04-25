@@ -1,7 +1,9 @@
 name: Docker Image CI for Angular
 
 on:
-  workflow_dispatch
+  issue_comment:
+    types: [ created ]
+  # workflow_dispatch
   # push:
   #   branches: [ "main" ]
   # pull_request:
@@ -9,6 +11,7 @@ on:
 
 jobs:
   build:
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == 'run actions' }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -36,7 +39,10 @@ jobs:
 
     - name: Set Docker image tags
       id: meta
-      run: echo "tags=$(echo $GITHUB_SHA | cut -c1-8)" >> $GITHUB_OUTPUT
+      run: |
+        REPO=$(basename "$GITHUB_REPOSITORY")
+        TAG="${REPO}-$(echo $GITHUB_SHA | cut -c1-8)"
+        echo "tags=$TAG" >> $GITHUB_OUTPUT
 
     # https://github.com/docker/build-push-action
     - name: Build and push Docker images
